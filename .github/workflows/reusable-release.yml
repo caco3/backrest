@@ -54,15 +54,26 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Create temporary tag for branch build
+        if: ${{ inputs.snapshot }}
+        run: |
+          git tag -f v0.0.0-snapshot-${{ github.sha }}
+          git push origin v0.0.0-snapshot-${{ github.sha }} --force
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser
           version: latest
-          args: ${{ inputs.snapshot && 'release --clean --skip=validate' || 'release --clean' }}
+          args: ${{ inputs.snapshot && 'release --clean --skip-validate' || 'release --clean' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_GITHUB_TOKEN: ${{ secrets.HOMEBREW_GITHUB_TOKEN }}
+
+      - name: Delete temporary tag
+        if: ${{ inputs.snapshot }}
+        run: |
+          git push origin :refs/tags/v0.0.0-snapshot-${{ github.sha }}
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4

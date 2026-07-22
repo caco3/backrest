@@ -59,7 +59,7 @@ jobs:
         with:
           distribution: goreleaser
           version: latest
-          args: ${{ inputs.snapshot && 'release --snapshot --clean --skip=validate --skip-publish=false' || 'release --clean' }}
+          args: ${{ inputs.snapshot && 'release --clean --skip=validate' || 'release --clean' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_GITHUB_TOKEN: ${{ secrets.HOMEBREW_GITHUB_TOKEN }}

@@ -104,7 +104,6 @@ archives:
 dockers_v2:
   - id: alpine
     images:
-      - "caco3/backrest"
       - "ghcr.io/caco3/backrest"
     tags:
       - latest
@@ -131,7 +130,6 @@ dockers_v2:
 
   - id: scratch
     images:
-      - caco3/backrest
       - ghcr.io/caco3/backrest
     tags:
       - scratch

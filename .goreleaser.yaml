@@ -159,17 +159,17 @@ brews:
     homepage: https://github.com/garethgeorge/backrest
     description: "Backrest is a web UI and orchestrator for restic backup."
 
-    url_template: "https://github.com/garethgeorge/backrest/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    url_template: "https://github.com/caco3/backrest/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
 
     commit_author:
       name: goreleaserbot
       email: bot@goreleaser.com
 
     repository:
-      owner: garethgeorge
+      owner: caco3
       name: homebrew-backrest-tap
       branch: main
-      token: "{{ .Env.HOMEBREW_GITHUB_TOKEN }}"
+      token: "{{ .Env.GITHUB_TOKEN }}"
 
     service: |
       run opt_bin/"backrest"

@@ -607,7 +607,16 @@ const PlanCard = ({
         )}
 
         {/* 30-day history strip */}
-        <HistoryStrip buckets={summary.historyLast30days} />
+        <HistoryStrip
+          buckets={summary.historyLast30days}
+          onCellClick={() =>
+            navigate(
+              lastFlowId
+                ? `/plan/${summary.id}?flowId=${lastFlowId}`
+                : `/plan/${summary.id}`,
+            )
+          }
+        />
 
         {/* Retention footer */}
         {retLine && (
@@ -691,10 +700,19 @@ const RepoCard = ({
               {formatBytes(bytesAdded30d)}
             </MetaItem>
           )}
+           
+              lastFlowId
+                ? `/repo/${summary.id}?flowId=${lastFlowId}
+                : `,
+            
+          
         </Flex>
 
         {/* 30-day history strip */}
-        <HistoryStrip buckets={summary.historyLast30days} />
+        <HistoryStrip
+          buckets={summary.historyLast30days}
+          onCellClick={() => navigate(`/repo/${summary.id}`)}
+        />
       </Card.Body>
     </Card.Root>
   );

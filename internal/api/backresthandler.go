@@ -908,61 +908,22 @@ func (s *BackrestHandler) TestHook(ctx context.Context, req *connect.Request[v1.
 		Duration: 0,
 	}
 
+	testTask := &tasks.GenericOneoffTask{
+		BaseTask: tasks.BaseTask{
+			TaskName: "test hook",
+			TaskType: "test",
+		},
+		Do: func(ctx context.Context, st tasks.ScheduledTask, runner tasks.TaskRunner) error { return nil },
+	}
+	runner := orchestrator.NewReadOnlyTaskRunner(s.orchestrator, testTask)
+
 	ctx = orchestratorlogging.ContextWithWriter(ctx, io.Discard)
-	if err := handler.Execute(ctx, hook, vars, &testHookRunner{}, event); err != nil {
+	if err := handler.Execute(ctx, hook, vars, runner, event); err != nil {
 		return nil, fmt.Errorf("failed to execute test hook: %w", err)
 	}
 
 	return connect.NewResponse(&emptypb.Empty{}), nil
 }
-
-type testHookRunner struct{}
-
-func (r *testHookRunner) InstanceID() string { return "test" }
-
-func (r *testHookRunner) GetOperation(id int64) (*v1.Operation, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (r *testHookRunner) CreateOperation(op ...*v1.Operation) error { return nil }
-
-func (r *testHookRunner) UpdateOperation(op ...*v1.Operation) error { return nil }
-
-func (r *testHookRunner) DeleteOperation(id ...int64) error { return nil }
-
-func (r *testHookRunner) QueryOperations(q oplog.Query, fn func(*v1.Operation) error) error {
-	return nil
-}
-
-func (r *testHookRunner) ExecuteHooks(ctx context.Context, events []v1.Hook_Condition, vars tasks.HookVars) error {
-	return nil
-}
-
-func (r *testHookRunner) GetRepo(repoID string) (*v1.Repo, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (r *testHookRunner) GetPlan(planID string) (*v1.Plan, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (r *testHookRunner) GetRepoOrchestrator(repoID string) (tasks.RepoOrchestrator, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (r *testHookRunner) ScheduleTask(task tasks.Task, priority int) error { return nil }
-
-func (r *testHookRunner) Config() *v1.Config { return &v1.Config{} }
-
-func (r *testHookRunner) Logger(ctx context.Context) *zap.Logger { return zap.L() }
-
-func (r *testHookRunner) LogrefWriter() (string, io.WriteCloser, error) {
-	return "test", &nopWriteCloser{io.Discard}, nil
-}
-
-type nopWriteCloser struct{ io.Writer }
-
-func (nopWriteCloser) Close() error { return nil }
 
 // withLookupCode tags err with connect.CodeNotFound when it stems from a missing
 // repo or plan lookup (orchestrator.ErrRepoNotFound / ErrPlanNotFound), preserving

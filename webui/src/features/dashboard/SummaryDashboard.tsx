@@ -21,8 +21,10 @@ import {
   GetOperationsRequestSchema,
   OpSelectorSchema,
   SummaryDashboardResponse,
+  SummaryDashboardResponse_BackupChart,
   SummaryDashboardResponse_Summary,
 } from "../../../gen/ts/v1/service_pb";
+import { DayCell } from "./HistoryStrip";
 import { PeerState } from "../../../gen/ts/v1sync/syncservice_pb";
 import { create } from "@bufbuild/protobuf";
 import { backrestService } from "../../api/client";
@@ -187,6 +189,24 @@ function summaryStatus(
     latestStatus === OperationStatus.STATUS_PENDING;
   const state = planState(latestStatus, running);
   return { latestTs, running, state, color: STATE_COLORS[state] };
+}
+
+const DAY_MS = 86_400_000;
+
+function flowIdForDay(
+  chart: SummaryDashboardResponse_BackupChart | undefined,
+  dayTimestampMs: bigint,
+): bigint | undefined {
+  if (!chart || dayTimestampMs === 0n) return undefined;
+  const start = dayTimestampMs;
+  const end = start + BigInt(DAY_MS);
+  for (let i = 0; i < chart.flowId.length; i++) {
+    const ts = chart.timestampMs[i];
+    if (ts >= start && ts < end) {
+      return chart.flowId[i];
+    }
+  }
+  return undefined;
 }
 
 // ─── Progress bar (animated shimmer) ─────────────────────────────────────────
@@ -609,13 +629,19 @@ const PlanCard = ({
         {/* 30-day history strip */}
         <HistoryStrip
           buckets={summary.historyLast30days}
-          onCellClick={() =>
+          onCellClick={(cell: DayCell) => {
+            const flowId =
+              cell.bucket &&
+              flowIdForDay(
+                summary.recentBackups,
+                cell.bucket.timestampMs,
+              )?.toString();
             navigate(
-              lastFlowId
-                ? `/plan/${summary.id}?flowId=${lastFlowId}`
+              flowId
+                ? `/plan/${summary.id}?flowId=${flowId}`
                 : `/plan/${summary.id}`,
-            )
-          }
+            );
+          }}
         />
 
         {/* Retention footer */}
@@ -700,18 +726,24 @@ const RepoCard = ({
               {formatBytes(bytesAdded30d)}
             </MetaItem>
           )}
-           
-              lastFlowId
-                ? `/repo/${summary.id}?flowId=${lastFlowId}
-                : `,
-            
-          
         </Flex>
 
         {/* 30-day history strip */}
         <HistoryStrip
           buckets={summary.historyLast30days}
-          onCellClick={() => navigate(`/repo/${summary.id}`)}
+          onCellClick={(cell: DayCell) => {
+            const flowId =
+              cell.bucket &&
+              flowIdForDay(
+                summary.recentBackups,
+                cell.bucket.timestampMs,
+              )?.toString();
+            navigate(
+              flowId
+                ? `/repo/${summary.id}?flowId=${flowId}`
+                : `/repo/${summary.id}`,
+            );
+          }}
         />
       </Card.Body>
     </Card.Root>

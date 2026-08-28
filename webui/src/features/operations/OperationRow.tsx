@@ -498,6 +498,19 @@ const changeColor = (change: DiffChange) => {
   }
 };
 
+const changeLetter = (change: DiffChange) => {
+  switch (change) {
+    case DiffChange.ADDED:
+      return "+";
+    case DiffChange.MODIFIED:
+      return "M";
+    case DiffChange.REMOVED:
+      return "-";
+    default:
+      return "?";
+  }
+};
+
 const SnapshotDetails = ({
   snapshot,
   repoId,
@@ -607,20 +620,28 @@ const SnapshotDetails = ({
               p={2}
             >
               {diff.length === 0 ? (
-                <Text color="fg.muted">{m.op_row_no_changes()}</Text>
+                <Text color="fg.muted" fontSize="xs">{m.op_row_no_changes()}</Text>
               ) : (
-                <Stack gap={1}>
-                  {diff.map((entry, idx) => (
-                    <Text
-                      key={idx}
-                      fontSize="sm"
-                      color={changeColor(entry.change)}
-                      fontFamily="mono"
-                    >
-                      {entry.path}
-                    </Text>
-                  ))}
-                </Stack>
+                <>
+                  <Flex gap={4} mb={2} fontSize="xs" fontFamily="mono">
+                    <Text color="green.500">+ Added</Text>
+                    <Text color="yellow.500">M Modified</Text>
+                    <Text color="red.500">- Removed</Text>
+                    <Text color="gray.500">? Unknown</Text>
+                  </Flex>
+                  <Stack gap={0.5}>
+                    {diff.map((entry, idx) => (
+                      <Text
+                        key={idx}
+                        fontSize="xs"
+                        color={changeColor(entry.change)}
+                        fontFamily="mono"
+                      >
+                        {changeLetter(entry.change)} {entry.path}
+                      </Text>
+                    ))}
+                  </Stack>
+                </>
               )}
             </Box>
           )}

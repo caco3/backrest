@@ -112,7 +112,7 @@ dockers_v2:
       - v{{ .Major }}.{{ .Minor }}
       - "{{ .Tag }}"
       - "{{ .Tag }}-alpine"
-      - "{{ .Branch }}-alpine"
+      - "{{ .Branch | replace "/" "-" }}-alpine"
     dockerfile: Dockerfile.alpine
     flags:
       - "--pull"
@@ -136,7 +136,7 @@ dockers_v2:
       - v{{ .Major }}-scratch
       - v{{ .Major }}.{{ .Minor }}-scratch
       - "{{ .Tag }}-scratch"
-      - "{{ .Branch }}-scratch"
+      - "{{ .Branch | replace "/" "-" }}-scratch"
     dockerfile: Dockerfile.scratch
     flags:
       - "--pull"

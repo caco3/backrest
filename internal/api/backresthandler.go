@@ -409,11 +409,7 @@ func (s *BackrestHandler) DiffSnapshot(ctx context.Context, req *connect.Request
 
 	var out bytes.Buffer
 	if err := repo.RunCommand(ctx, fmt.Sprintf("diff --no-lock %s %s", query.ParentId, query.SnapshotId), &out); err != nil {
-		outStr := strings.TrimSpace(out.String())
-		if len(outStr) > 4096 {
-			outStr = outStr[:4096] + "\n..."
-		}
-		return nil, fmt.Errorf("failed to diff snapshots: %w\n\n%s", err, outStr)
+		return nil, fmt.Errorf("failed to diff snapshots: %w", err)
 	}
 
 	var entries []*v1.DiffEntry

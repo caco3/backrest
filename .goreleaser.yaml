@@ -104,8 +104,7 @@ archives:
 dockers_v2:
   - id: alpine
     images:
-      - "garethgeorge/backrest"
-      - "ghcr.io/garethgeorge/backrest"
+      - "ghcr.io/caco3/backrest"
     tags:
       - latest
       - latest-alpine
@@ -113,6 +112,7 @@ dockers_v2:
       - v{{ .Major }}.{{ .Minor }}
       - "{{ .Tag }}"
       - "{{ .Tag }}-alpine"
+      - "{{ .Branch }}-alpine"
     dockerfile: Dockerfile.alpine
     flags:
       - "--pull"
@@ -130,13 +130,13 @@ dockers_v2:
 
   - id: scratch
     images:
-      - garethgeorge/backrest
-      - ghcr.io/garethgeorge/backrest
+      - ghcr.io/caco3/backrest
     tags:
       - scratch
       - v{{ .Major }}-scratch
       - v{{ .Major }}.{{ .Minor }}-scratch
       - "{{ .Tag }}-scratch"
+      - "{{ .Branch }}-scratch"
     dockerfile: Dockerfile.scratch
     flags:
       - "--pull"
@@ -159,17 +159,17 @@ brews:
     homepage: https://github.com/garethgeorge/backrest
     description: "Backrest is a web UI and orchestrator for restic backup."
 
-    url_template: "https://github.com/garethgeorge/backrest/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    url_template: "https://github.com/caco3/backrest/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
 
     commit_author:
       name: goreleaserbot
       email: bot@goreleaser.com
 
     repository:
-      owner: garethgeorge
+      owner: caco3
       name: homebrew-backrest-tap
       branch: main
-      token: "{{ .Env.HOMEBREW_GITHUB_TOKEN }}"
+      token: "{{ .Env.GITHUB_TOKEN }}"
 
     service: |
       run opt_bin/"backrest"
@@ -185,5 +185,5 @@ changelog:
 
 release:
   github:
-    owner: garethgeorge
+    owner: caco3
     name: backrest

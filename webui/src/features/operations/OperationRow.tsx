@@ -730,7 +730,37 @@ const DiffView = ({
   snapshot: ResticSnapshot;
   repoId: string;
 }) => {
+  type ChangeType = "added" | "modified" | "removed" | "unknown";
+
+  const getChangeType = (change: DiffChange): ChangeType => {
+    switch (change) {
+      case DiffChange.ADDED:
+        return "added";
+      case DiffChange.MODIFIED:
+        return "modified";
+      case DiffChange.REMOVED:
+        return "removed";
+      default:
+        return "unknown";
+    }
+  };
+
+  const changeTypeConfig = [
+    { type: "added" as ChangeType, label: "Added", color: "green", prefix: "+" },
+    { type: "modified" as ChangeType, label: "Modified", color: "yellow", prefix: "M" },
+    { type: "removed" as ChangeType, label: "Removed", color: "red", prefix: "-" },
+    { type: "unknown" as ChangeType, label: "Unknown", color: "gray", prefix: "?" },
+  ];
+
   const [diff, setDiff] = useState<DiffEntry[] | null>(null);
+  const [filter, setFilter] = useState<Set<ChangeType>>(
+    new Set(changeTypeConfig.map((c) => c.type)),
+  );
+
+  const filtered = useMemo(() => {
+    if (diff === null) return [];
+    return diff.filter((entry) => filter.has(getChangeType(entry.change)));
+  }, [diff, filter]);
 
   useEffect(() => {
     const fetchDiff = async () => {
@@ -769,13 +799,34 @@ const DiffView = ({
 
   return (
     <Box maxH="300px" overflowY="auto">
-      <Flex gap={4} mb={2} fontSize="xs" fontFamily="mono">
-        <Text color="green.500">+ Added</Text>
-        <Text color="yellow.500">M Modified</Text>
-        <Text color="red.500">- Removed</Text>
-        <Text color="gray.500">? Unknown</Text>
+      <Flex gap={2} mb={2} fontFamily="mono" flexWrap="wrap">
+        {changeTypeConfig.map((c) => {
+          const active = filter.has(c.type);
+          return (
+            <Button
+              key={c.type}
+              size="sm"
+              variant={active ? "solid" : "ghost"}
+              colorPalette={c.color}
+              onClick={() => {
+                setFilter((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(c.type)) next.delete(c.type);
+                  else next.add(c.type);
+                  return next;
+                });
+              }}
+            >
+              {c.prefix} {c.label}
+            </Button>
+          );
+        })}
       </Flex>
-      <DiffTree entries={diff} />
+      {filtered.length === 0 ? (
+        <Text color="fg.muted" fontSize="xs">No changes match the selected filters.</Text>
+      ) : (
+        <DiffTree entries={filtered} />
+      )}
     </Box>
   );
 };

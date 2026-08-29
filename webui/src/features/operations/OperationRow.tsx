@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Operation,
   OperationForget,
@@ -18,6 +18,7 @@ import {
   Heading,
   Code,
   IconButton,
+  Spinner,
 } from "@chakra-ui/react";
 import {
   MenuRoot,
@@ -25,7 +26,7 @@ import {
   MenuContent,
   MenuItem,
 } from "../../components/ui/menu";
-import { FiFileText, FiMoreVertical, FiTrash2, FiX } from "react-icons/fi";
+import { FiFileText, FiMoreVertical, FiTrash2, FiX, FiChevronRight, FiChevronDown, FiFolder, FiFile } from "react-icons/fi";
 import { ProgressCircle } from "../../components/ui/progress-circle";
 import { ProgressBar, ProgressRoot } from "../../components/ui/progress";
 import { toaster } from "../../components/ui/toaster";
@@ -46,6 +47,9 @@ import {
 import {
   CancelOperationRequestSchema,
   ClearHistoryRequestSchema,
+  DiffChange,
+  DiffEntry,
+  DiffSnapshotRequestSchema,
 } from "../../../gen/ts/v1/service_pb";
 import { backrestService } from "../../api/client";
 import { useShowModal } from "../../components/common/ModalManager";
@@ -298,12 +302,15 @@ export const OperationRow = ({
     bodyItems.push({
       key: "details",
       label: m.op_row_details(),
-      children: <SnapshotDetails snapshot={snapshotOp.snapshot!} />,
+      children: (
+        <SnapshotDetails
+          snapshot={snapshotOp.snapshot!}
+        />
+      ),
     });
     bodyItems.push({
       key: "browser",
       label: m.op_row_snapshot_browser(),
-
       children: (
         <SnapshotBrowser
           snapshotId={snapshotOp.snapshot!.id}
@@ -313,6 +320,18 @@ export const OperationRow = ({
         />
       ),
     });
+    if (snapshotOp.snapshot!.parent) {
+      bodyItems.push({
+        key: "diff",
+        label: m.op_row_show_diff(),
+        children: (
+          <DiffView
+            snapshot={snapshotOp.snapshot!}
+            repoId={currentRepoId}
+          />
+        ),
+      });
+    }
   } else if (operation.op.case === "operationForget") {
     const forgetOp = operation.op.value;
     expandedBodyItems.push("forgot");
@@ -477,7 +496,164 @@ export const OperationRow = ({
   );
 };
 
-const SnapshotDetails = ({ snapshot }: { snapshot: ResticSnapshot }) => {
+const changeColor = (change: DiffChange) => {
+  switch (change) {
+    case DiffChange.ADDED:
+      return "green.500";
+    case DiffChange.REMOVED:
+      return "red.500";
+    case DiffChange.MODIFIED:
+      return "yellow.500";
+    default:
+      return "gray.500";
+  }
+};
+
+const changeLetter = (change: DiffChange) => {
+  switch (change) {
+    case DiffChange.ADDED:
+      return "+";
+    case DiffChange.MODIFIED:
+      return "M";
+    case DiffChange.REMOVED:
+      return "-";
+    default:
+      return "?";
+  }
+};
+
+interface DiffNode {
+  key: string;
+  name: string;
+  path: string;
+  change?: DiffChange;
+  children: DiffNode[];
+}
+
+const buildDiffTree = (entries: DiffEntry[]): DiffNode[] => {
+  const root: DiffNode = { key: "/", name: "", path: "/", children: [] };
+  const dirs = new Map<string, DiffNode>();
+  dirs.set("/", root);
+
+  for (const entry of entries) {
+    const full = entry.path!;
+    const parts = full.split("/").filter(Boolean);
+    let cur = root;
+    let curPath = "";
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      curPath = curPath ? `${curPath}/${part}` : `/${part}`;
+      let node = dirs.get(curPath);
+      if (!node) {
+        node = { key: curPath, name: part, path: curPath, children: [] };
+        dirs.set(curPath, node);
+        cur.children.push(node);
+      }
+      if (i === parts.length - 1) {
+        node.change = entry.change;
+      } else {
+        cur = node;
+      }
+    }
+  }
+
+  return root.children;
+};
+
+const DiffTreeNode = ({
+  node,
+  collapsedKeys,
+  toggle,
+}: {
+  node: DiffNode;
+  collapsedKeys: Set<string>;
+  toggle: (key: string) => void;
+}) => {
+  const isBranch = node.children.length > 0;
+  const isCollapsed = collapsedKeys.has(node.key);
+
+  return (
+    <Box>
+      <Flex
+        align="center"
+        gap={2}
+        cursor={isBranch ? "pointer" : undefined}
+        onClick={isBranch ? () => toggle(node.key) : undefined}
+      >
+        {isBranch ? (
+          <>
+            {isCollapsed ? <FiChevronRight /> : <FiChevronDown />}
+            <FiFolder />
+            <Text fontFamily="mono" fontSize="xs">
+              {node.name}/
+            </Text>
+          </>
+        ) : (
+          <>
+            <Box w="1.2em" />
+            <FiFile />
+            <Text
+              fontFamily="mono"
+              fontSize="xs"
+              color={changeColor(node.change!)}
+              as="span"
+              mr={1}
+            >
+              {changeLetter(node.change!)}
+            </Text>
+            <Text fontFamily="mono" fontSize="xs" as="span">
+              {node.name}
+            </Text>
+          </>
+        )}
+      </Flex>
+      {!isCollapsed && isBranch && (
+        <Box pl={6}>
+          {node.children.map((child) => (
+            <DiffTreeNode
+              key={child.key}
+              node={child}
+              collapsedKeys={collapsedKeys}
+              toggle={toggle}
+            />
+          ))}
+        </Box>
+      )}
+    </Box>
+  );
+};
+
+const DiffTree = ({ entries }: { entries: DiffEntry[] }) => {
+  const tree = useMemo(() => buildDiffTree(entries), [entries]);
+  const [collapsedKeys, setCollapsedKeys] = useState<Set<string>>(new Set());
+  const toggle = (key: string) => {
+    setCollapsedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  return (
+    <Stack gap={0.5}>
+      {tree.map((node) => (
+        <DiffTreeNode
+          key={node.key}
+          node={node}
+          collapsedKeys={collapsedKeys}
+          toggle={toggle}
+        />
+      ))}
+    </Stack>
+  );
+};
+
+const SnapshotDetails = ({
+  snapshot,
+}: {
+  snapshot: ResticSnapshot;
+}) => {
   const summary = snapshot.summary;
 
   return (
@@ -544,6 +720,63 @@ const SnapshotDetails = ({ snapshot }: { snapshot: ResticSnapshot }) => {
         </>
       )}
     </>
+  );
+};
+
+const DiffView = ({
+  snapshot,
+  repoId,
+}: {
+  snapshot: ResticSnapshot;
+  repoId: string;
+}) => {
+  const [diff, setDiff] = useState<DiffEntry[] | null>(null);
+
+  useEffect(() => {
+    const fetchDiff = async () => {
+      try {
+        const resp = await backrestService.diffSnapshot(
+          create(DiffSnapshotRequestSchema, {
+            repoId,
+            parentId: snapshot.parent,
+            snapshotId: snapshot.id,
+          }),
+        );
+        setDiff(resp.entries);
+      } catch (e: any) {
+        alerts.error(e.message || m.op_row_diff_failed());
+      }
+    };
+    fetchDiff();
+  }, []);
+
+  if (!snapshot.parent) {
+    return null;
+  }
+
+  if (diff === null) {
+    return (
+      <Flex align="center" gap={2}>
+        <Spinner size="sm" />
+        <Text fontSize="sm">Loading changed files...</Text>
+      </Flex>
+    );
+  }
+
+  if (diff.length === 0) {
+    return <Text color="fg.muted" fontSize="xs">{m.op_row_no_changes()}</Text>;
+  }
+
+  return (
+    <Box maxH="300px" overflowY="auto">
+      <Flex gap={4} mb={2} fontSize="xs" fontFamily="mono">
+        <Text color="green.500">+ Added</Text>
+        <Text color="yellow.500">M Modified</Text>
+        <Text color="red.500">- Removed</Text>
+        <Text color="gray.500">? Unknown</Text>
+      </Flex>
+      <DiffTree entries={diff} />
+    </Box>
   );
 };
 

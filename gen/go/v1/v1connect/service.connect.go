@@ -81,6 +81,9 @@ const (
 	// BackrestPathAutocompleteProcedure is the fully-qualified name of the Backrest's PathAutocomplete
 	// RPC.
 	BackrestPathAutocompleteProcedure = "/v1.Backrest/PathAutocomplete"
+	// BackrestHookAutocompleteProcedure is the fully-qualified name of the Backrest's HookAutocomplete
+	// RPC.
+	BackrestHookAutocompleteProcedure = "/v1.Backrest/HookAutocomplete"
 	// BackrestGetSummaryDashboardProcedure is the fully-qualified name of the Backrest's
 	// GetSummaryDashboard RPC.
 	BackrestGetSummaryDashboardProcedure = "/v1.Backrest/GetSummaryDashboard"
@@ -124,6 +127,8 @@ type BackrestClient interface {
 	ClearHistory(context.Context, *connect.Request[v1.ClearHistoryRequest]) (*connect.Response[emptypb.Empty], error)
 	// PathAutocomplete provides path autocompletion options for a given filesystem path.
 	PathAutocomplete(context.Context, *connect.Request[types.StringValue]) (*connect.Response[types.StringList], error)
+	// HookAutocomplete returns previously used values for a hook action field.
+	HookAutocomplete(context.Context, *connect.Request[v1.HookAutocompleteRequest]) (*connect.Response[types.StringList], error)
 	// GetSummaryDashboard returns data for the dashboard view.
 	GetSummaryDashboard(context.Context, *connect.Request[emptypb.Empty]) (*connect.Response[v1.SummaryDashboardResponse], error)
 	// GeneratePairingToken creates a new pairing token on the server that can be shared with clients to simplify peering.
@@ -270,6 +275,12 @@ func NewBackrestClient(httpClient connect.HTTPClient, baseURL string, opts ...co
 			connect.WithSchema(backrestMethods.ByName("PathAutocomplete")),
 			connect.WithClientOptions(opts...),
 		),
+		hookAutocomplete: connect.NewClient[v1.HookAutocompleteRequest, types.StringList](
+			httpClient,
+			baseURL+BackrestHookAutocompleteProcedure,
+			connect.WithSchema(backrestMethods.ByName("HookAutocomplete")),
+			connect.WithClientOptions(opts...),
+		),
 		getSummaryDashboard: connect.NewClient[emptypb.Empty, v1.SummaryDashboardResponse](
 			httpClient,
 			baseURL+BackrestGetSummaryDashboardProcedure,
@@ -314,6 +325,7 @@ type backrestClient struct {
 	getDownloadURL       *connect.Client[v1.GetDownloadURLRequest, types.StringValue]
 	clearHistory         *connect.Client[v1.ClearHistoryRequest, emptypb.Empty]
 	pathAutocomplete     *connect.Client[types.StringValue, types.StringList]
+	hookAutocomplete     *connect.Client[v1.HookAutocompleteRequest, types.StringList]
 	getSummaryDashboard  *connect.Client[emptypb.Empty, v1.SummaryDashboardResponse]
 	generatePairingToken *connect.Client[v1.GeneratePairingTokenRequest, v1.GeneratePairingTokenResponse]
 	testHook             *connect.Client[v1.Hook, emptypb.Empty]
@@ -424,6 +436,11 @@ func (c *backrestClient) PathAutocomplete(ctx context.Context, req *connect.Requ
 	return c.pathAutocomplete.CallUnary(ctx, req)
 }
 
+// HookAutocomplete calls v1.Backrest.HookAutocomplete.
+func (c *backrestClient) HookAutocomplete(ctx context.Context, req *connect.Request[v1.HookAutocompleteRequest]) (*connect.Response[types.StringList], error) {
+	return c.hookAutocomplete.CallUnary(ctx, req)
+}
+
 // GetSummaryDashboard calls v1.Backrest.GetSummaryDashboard.
 func (c *backrestClient) GetSummaryDashboard(ctx context.Context, req *connect.Request[emptypb.Empty]) (*connect.Response[v1.SummaryDashboardResponse], error) {
 	return c.getSummaryDashboard.CallUnary(ctx, req)
@@ -472,6 +489,8 @@ type BackrestHandler interface {
 	ClearHistory(context.Context, *connect.Request[v1.ClearHistoryRequest]) (*connect.Response[emptypb.Empty], error)
 	// PathAutocomplete provides path autocompletion options for a given filesystem path.
 	PathAutocomplete(context.Context, *connect.Request[types.StringValue]) (*connect.Response[types.StringList], error)
+	// HookAutocomplete returns previously used values for a hook action field.
+	HookAutocomplete(context.Context, *connect.Request[v1.HookAutocompleteRequest]) (*connect.Response[types.StringList], error)
 	// GetSummaryDashboard returns data for the dashboard view.
 	GetSummaryDashboard(context.Context, *connect.Request[emptypb.Empty]) (*connect.Response[v1.SummaryDashboardResponse], error)
 	// GeneratePairingToken creates a new pairing token on the server that can be shared with clients to simplify peering.
@@ -614,6 +633,12 @@ func NewBackrestHandler(svc BackrestHandler, opts ...connect.HandlerOption) (str
 		connect.WithSchema(backrestMethods.ByName("PathAutocomplete")),
 		connect.WithHandlerOptions(opts...),
 	)
+	backrestHookAutocompleteHandler := connect.NewUnaryHandler(
+		BackrestHookAutocompleteProcedure,
+		svc.HookAutocomplete,
+		connect.WithSchema(backrestMethods.ByName("HookAutocomplete")),
+		connect.WithHandlerOptions(opts...),
+	)
 	backrestGetSummaryDashboardHandler := connect.NewUnaryHandler(
 		BackrestGetSummaryDashboardProcedure,
 		svc.GetSummaryDashboard,
@@ -676,6 +701,8 @@ func NewBackrestHandler(svc BackrestHandler, opts ...connect.HandlerOption) (str
 			backrestClearHistoryHandler.ServeHTTP(w, r)
 		case BackrestPathAutocompleteProcedure:
 			backrestPathAutocompleteHandler.ServeHTTP(w, r)
+		case BackrestHookAutocompleteProcedure:
+			backrestHookAutocompleteHandler.ServeHTTP(w, r)
 		case BackrestGetSummaryDashboardProcedure:
 			backrestGetSummaryDashboardHandler.ServeHTTP(w, r)
 		case BackrestGeneratePairingTokenProcedure:
@@ -773,6 +800,10 @@ func (UnimplementedBackrestHandler) ClearHistory(context.Context, *connect.Reque
 
 func (UnimplementedBackrestHandler) PathAutocomplete(context.Context, *connect.Request[types.StringValue]) (*connect.Response[types.StringList], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.Backrest.PathAutocomplete is not implemented"))
+}
+
+func (UnimplementedBackrestHandler) HookAutocomplete(context.Context, *connect.Request[v1.HookAutocompleteRequest]) (*connect.Response[types.StringList], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("v1.Backrest.HookAutocomplete is not implemented"))
 }
 
 func (UnimplementedBackrestHandler) GetSummaryDashboard(context.Context, *connect.Request[emptypb.Empty]) (*connect.Response[v1.SummaryDashboardResponse], error) {

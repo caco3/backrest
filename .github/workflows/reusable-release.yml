@@ -67,6 +67,11 @@ jobs:
           PREVIEW_VERSION: "0.0.0-preview-${{ github.sha }}"
           BRANCH_TAG: "${{ github.ref_name }}"
         run: |
+          # Rebuild the web UI from source so the preview image reflects the
+          # exact commit, not whatever GoReleaser's before-hooks may have cached.
+          pnpm --prefix webui install
+          GOOS=linux BACKREST_BUILD_VERSION="$PREVIEW_VERSION" go generate ./...
+
           # Build per-platform binaries for the preview image
           for platform in linux/amd64 linux/arm64; do
             os="${platform%/*}"

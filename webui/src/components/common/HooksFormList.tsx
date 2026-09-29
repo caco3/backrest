@@ -52,7 +52,7 @@ export const hooksListTooltipText = (
   <Text as="span">
     {m.hooks_from_list_a()}
     <Link
-      href="https://garethgeorge.github.io/backrest/docs/hooks"
+      href="https://caco3.github.io/backrest/docs/hooks"
       target="_blank"
       color="blue.500"
     >
@@ -60,7 +60,7 @@ export const hooksListTooltipText = (
     </Link>
     {m.hooks_from_list_c()}
     <Link
-      href="https://garethgeorge.github.io/backrest/cookbooks/command-hook-examples"
+      href="https://caco3.github.io/backrest/cookbooks/command-hook-examples"
       target="_blank"
       color="blue.500"
     >

@@ -411,7 +411,7 @@ export const SettingsModal = () => {
               <Text fontSize="sm">
                 {m.settings_modal_see_the()}{" "}
                 <a
-                  href="https://garethgeorge.github.io/backrest/docs/multihost"
+                  href="https://caco3.github.io/backrest/docs/multihost"
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{ textDecoration: "underline" }}

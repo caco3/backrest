@@ -41,7 +41,7 @@ export const GettingStartedGuide = () => {
 
       <Text mb={4}>
         <Link
-          href="https://github.com/garethgeorge/backrest"
+          href="https://github.com/caco3/backrest"
           target="_blank"
           colorPalette="blue"
         >
@@ -70,7 +70,7 @@ export const GettingStartedGuide = () => {
         <List.Item>
           {m.add_repo_modal_guide_text_p1()}
           <Link
-            href="https://garethgeorge.github.io/backrest"
+            href="https://caco3.github.io/backrest"
             target="_blank"
             colorPalette="blue"
           >

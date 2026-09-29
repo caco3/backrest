@@ -30,6 +30,7 @@ import {
 import { Tooltip } from "../ui/tooltip";
 import { Link } from "../ui/link";
 import { EnumSelector, EnumOption } from "./EnumSelector";
+import { fromJson } from "@bufbuild/protobuf";
 import { backrestService } from "../../api/client";
 import { alerts } from "./Alerts";
 import { HookAutocompleteInput } from "./HookAutocompleteInput";

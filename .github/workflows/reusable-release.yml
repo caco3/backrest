@@ -65,6 +65,7 @@ jobs:
         if: ${{ inputs.snapshot }}
         env:
           PREVIEW_VERSION: "0.0.0-preview-${{ github.sha }}"
+          BRANCH_TAG: "${{ github.ref_name }}"
         run: |
           # Build per-platform binaries for the preview image
           for platform in linux/amd64 linux/arm64; do
@@ -79,13 +80,15 @@ jobs:
               -o "$platform/docker-entrypoint" ./cmd/docker-entrypoint/
           done
 
+          SANITIZED_BRANCH=$(echo "$BRANCH_TAG" | sed 's/[^a-zA-Z0-9._-]/-/g')
+
           # Build and push multi-arch preview image
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
             --file Dockerfile.alpine \
             --tag "ghcr.io/${{ github.repository }}:preview" \
-            --tag "ghcr.io/${{ github.repository }}:main" \
             --tag "ghcr.io/${{ github.repository }}:sha-${{ github.sha }}" \
+            --tag "ghcr.io/${{ github.repository }}:${SANITIZED_BRANCH}" \
             --push .
 
       - name: Upload Build Artifacts

@@ -2,7 +2,7 @@ name: Release Preview
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "integration/all-features"]
     paths-ignore:
       - "docs/**"
       - "*.md"

@@ -41,6 +41,7 @@ import {
 import { Operation } from "../../../gen/ts/v1/operations_pb";
 import { OperationFilter } from "../operations/OperationFilter";
 import * as m from "../../paraglide/messages";
+import { nl2br } from "../../lib/util";
 
 const FILTER_TYPES = [
   DisplayType.BACKUP,
@@ -214,6 +215,14 @@ export const PlanView = ({
           </MenuRoot>
         </Group>
       </Flex>
+
+      {plan.description && (
+        <Box mb={4}>
+          <Text color="fg.muted" fontSize="sm">
+            {nl2br(plan.description)}
+          </Text>
+        </Box>
+      )}
 
       <TabsRoot defaultValue="tree" lazyMount>
         <TabsList>

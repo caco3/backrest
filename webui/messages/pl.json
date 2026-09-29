@@ -503,6 +503,7 @@
   "dashboard_history_tooltip_status_inprogress": "{count} w trakcie",
   "dashboard_history_tooltip_overdue": "Kopia zapasowa zaległa na ten dzień",
   "dashboard_history_tooltip_on_schedule": "Kopie zapasowe aktualne na ten dzień",
+
   "app_remote": "Remote",
   "app_remote_repo_updated": "Remote repo updated",
   "app_remote_plan_updated": "Remote plan updated",
@@ -682,5 +683,11 @@
   "app_remote_repo_info": "This is a remote repo from {origin}. Operation history only includes backups run locally and may be incomplete.",
   "add_repo_modal_error_env_format": "Zmienna środowiskowa musi mieć format KLUCZ=WARTOŚĆ",
   "add_repo_modal_env_vars_placeholder": "KLUCZ=WARTOŚĆ (Jedna na linię)",
-  "hooks_form_list_webhook_url": "{service} Webhook URL"
+  "hooks_form_list_webhook_url": "{service} Webhook URL",
+  "add_plan_modal_field_description": "Description",
+  "add_plan_modal_field_description_tooltip": "Optional human-readable description of this plan. The sidebar shows only the first line.",
+  "add_plan_modal_field_description_placeholder": "Describe what this plan backs up",
+  "add_repo_modal_field_description": "Description",
+  "add_repo_modal_field_description_tooltip": "Optional human-readable description of this repo. The sidebar shows only the first line.",
+  "add_repo_modal_field_description_placeholder": "Describe what this repo stores"
 }

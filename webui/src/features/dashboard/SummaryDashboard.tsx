@@ -557,6 +557,18 @@ const PlanCard = ({
                 {schedLine}
               </Text>
             )}
+            {planCfg?.description && (
+              <Text
+                fontSize="12.5px"
+                color="fg.muted"
+                mt="2px"
+                overflow="hidden"
+                textOverflow="ellipsis"
+                whiteSpace="nowrap"
+              >
+                {planCfg.description}
+              </Text>
+            )}
           </Box>
           <Box mt="6px" flexShrink={0}>
             <StatusDot color={status.color} pulsing={running} />
@@ -670,18 +682,38 @@ const RepoCard = ({
   summary: SummaryDashboardResponse_Summary;
 }) => {
   const navigate = useNavigate();
+  const [config] = useConfig();
   const status = summaryStatus(summary);
   const lastFlowId = summary.recentBackups?.flowId[0]?.toString();
   const protectedBytes = Number(summary.protectedBytes);
   const bytesAdded30d = Number(summary.bytesAddedLast30days);
 
+  const repoCfg = useMemo(
+    () => config?.repos.find((r) => r.id === summary.id),
+    [config, summary.id],
+  );
+
   return (
     <Card.Root borderRadius="2xl" shadow="sm">
       <Card.Body px={5} py={5}>
         <Flex justify="space-between" align="flex-start" gap={3}>
-          <CardTitle onClick={() => navigate(`/repo/${summary.id}`)}>
-            {summary.id}
-          </CardTitle>
+          <Box>
+            <CardTitle onClick={() => navigate(`/repo/${summary.id}`)}>
+              {summary.id}
+            </CardTitle>
+            {repoCfg?.description && (
+              <Text
+                fontSize="12.5px"
+                color="fg.muted"
+                mt="2px"
+                overflow="hidden"
+                textOverflow="ellipsis"
+                whiteSpace="nowrap"
+              >
+                {repoCfg.description}
+              </Text>
+            )}
+          </Box>
           <Box mt="6px" flexShrink={0}>
             <StatusDot color={status.color} />
           </Box>
